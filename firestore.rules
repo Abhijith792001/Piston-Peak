@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Default Deny - The Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- Helper Functions (Pillar 3 & 4) ---
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    
+    function isAdmin() {
+      return isSignedIn() && (
+        request.auth.token.email == 'abhijith792001@gmail.com' ||
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin'
+      );
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- Validation Blueprints (Pillar 2) ---
+
+    function isValidUser(data) {
+      return data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 100 &&
+             data.role in ['user', 'admin'];
+    }
+
+    function isValidProduct(data) {
+      return data.keys().hasAll(['name', 'brand', 'price', 'description', 'imageUrl', 'stock']) &&
+             data.name is string && data.name.size() <= 200 &&
+             data.brand is string && data.brand.size() <= 100 &&
+             data.price is number && data.price >= 0 &&
+             data.description is string && data.description.size() <= 2000 &&
+             data.imageUrl is string && data.imageUrl.size() <= 1000 &&
+             data.stock is int && data.stock >= 0;
+    }
+
+    // --- Collection Rules ---
+
+    // Users Collection (Pillar 6 - PII Isolation)
+    match /users/{userId} {
+      allow get: if isOwner(userId) || isAdmin();
+      allow list: if isAdmin();
+      allow create: if isOwner(userId) && 
+                    incoming().keys().hasAll(['name', 'email', 'role', 'createdAt']) &&
+                    isValidUser(incoming()) && 
+                    (incoming().role == 'user' || (incoming().email == 'abhijith792001@gmail.com' && incoming().role == 'admin')) && 
+                    incoming().createdAt == request.time;
+      allow update: if (isOwner(userId) || isAdmin()) && 
+                    (incoming().diff(existing()).affectedKeys().hasOnly(['name', 'addresses']) || isAdmin()) &&
+                    (!incoming().keys().hasAny(['role', 'createdAt', 'email']) || (
+                      incoming().role == existing().role && 
+                      incoming().createdAt == existing().createdAt &&
+                      incoming().email == existing().email
+                    ));
+    }
+
+    // Products Collection (Pillar 8 - Secure List Queries)
+    match /products/{productId} {
+      // Products are public catalog assets
+      allow get: if true;
+      allow list: if true; 
+      
+      // Only admins can modify inventory (Action-Based patterns)
+      allow create: if isAdmin() && isValidProduct(incoming());
+      allow update: if isAdmin() && isValidProduct(incoming());
+      allow delete: if isAdmin();
+    }
+
+    // Orders Collection (Pillar 1 - Master Gate)
+    match /orders/{orderId} {
+      allow get: if isOwner(existing().userId) || isAdmin();
+      allow list: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().createdAt == request.time;
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // Reviews Collection
+    match /reviews/{reviewId} {
+      allow read: if true;
+      allow create: if isSignedIn() && incoming().userId == request.auth.uid && incoming().createdAt == request.time;
+      allow delete: if isAdmin() || isOwner(existing().userId);
+    }
+
+    // Banners Collection
+    match /banners/{bannerId} {
+      allow read: if true;
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}
