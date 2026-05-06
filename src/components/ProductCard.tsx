@@ -45,6 +45,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ product }) => {
             toggleWishlist(product);
           }}
           className="absolute top-4 right-4 text-slate-300 hover:text-red-500 transition-colors z-10"
+          aria-label={wishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
         >
           <Heart size={18} fill={wishlisted ? '#ff6161' : 'none'} className={wishlisted ? 'text-[#ff6161]' : ''} />
         </button>

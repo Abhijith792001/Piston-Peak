@@ -9,6 +9,18 @@
     @apply antialiased text-slate-900 bg-[#F8F9FA] min-h-screen font-sans;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
   }
+
+  /* Accessibility & UX Fixes */
+  .text-slate-400 {
+    color: #4b5563 !important; /* slate-600 for contrast compliance */
+  }
+
+  /* Ensure touch targets are at least 44px */
+  button, 
+  a {
+    min-height: 44px;
+    min-width: 44px;
+  }
 }
 
 @layer utilities {

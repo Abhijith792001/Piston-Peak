@@ -100,14 +100,15 @@ export default function Home() {
       <div className="relative h-[200px] md:h-[320px] w-full overflow-hidden bg-slate-100 shadow-sm rounded-[16px]">
         <AnimatePresence mode="wait">
           {banners.length > 0 ? (
-            <motion.div
+            <motion.button
               key={currentBannerIndex}
               initial={{ opacity: 0, x: 100 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -100 }}
               transition={{ duration: 0.5 }}
-              className="absolute inset-0 cursor-pointer"
+              className="absolute inset-0 cursor-pointer w-full text-left"
               onClick={() => banners[currentBannerIndex].link && window.open(banners[currentBannerIndex].link, '_blank')}
+              aria-label={banners[currentBannerIndex].title || 'View promotion'}
             >
               <Image 
                 src={banners[currentBannerIndex].imageUrl} 
@@ -115,13 +116,14 @@ export default function Home() {
                 alt={banners[currentBannerIndex].title || 'Banner'}
                 fill
                 priority
+                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
               />
               {banners[currentBannerIndex].title && (
                 <div className="hidden md:block absolute bottom-10 left-10 bg-black/40 backdrop-blur-md p-4 text-white rounded-sm border-l-4 border-[#ffe500]">
                    <h2 className="text-2xl font-bold uppercase tracking-widest leading-tight">{banners[currentBannerIndex].title}</h2>
                 </div>
               )}
-            </motion.div>
+            </motion.button>
           ) : (
             <div className="flex items-center justify-center h-full text-slate-300 font-bold">
                {loading ? 'Loading Banners...' : 'No banners available'}
@@ -133,28 +135,33 @@ export default function Home() {
           <>
             <button 
               onClick={() => setCurrentBannerIndex((prev) => (prev - 1 + banners.length) % banners.length)}
-              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white backdrop-blur-sm transition-all"
+              className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white backdrop-blur-sm transition-all z-20"
+              aria-label="Previous slide"
             >
               <ChevronLeft size={24} />
             </button>
             <button 
               onClick={() => setCurrentBannerIndex((prev) => (prev + 1) % banners.length)}
-              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white backdrop-blur-sm transition-all"
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/40 p-2 rounded-full text-white backdrop-blur-sm transition-all z-20"
+              aria-label="Next slide"
             >
               <ChevronRight size={24} />
             </button>
-            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
               {banners.map((_, idx) => (
                 <button 
                   key={idx}
                   onClick={() => setCurrentBannerIndex(idx)}
                   className={`w-2 h-2 rounded-full transition-all ${idx === currentBannerIndex ? 'bg-[#ffe500] w-6' : 'bg-white/50'}`}
+                  aria-label={`Go to slide ${idx + 1}`}
                 />
               ))}
             </div>
           </>
         )}
       </div>
+
+      <h1 className="sr-only">Piston Peak - Premium Die-cast Registry and Shop</h1>
 
       {renderProductSection('Trending Product', 'Hand-picked premium selections from the vault', featuredProducts)}
 
