@@ -113,7 +113,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </div>
               </div>
             ) : (
-              <Link href="/login" className="bg-[#D72638] text-white px-8 py-2 rounded-md font-bold text-sm hover:brightness-110 shadow-lg shadow-red-900/20 transition-all">
+              <Link href="/login" className="flex items-center justify-center bg-[#D72638] text-white px-8 py-2 rounded-md font-bold text-sm hover:brightness-110 shadow-lg shadow-red-900/20 transition-all">
                 Login
               </Link>
             )}
